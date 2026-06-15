@@ -40,3 +40,17 @@
   - components/verse/ImportDataModal.tsx: 파일 업로드, 빈 양식·샘플 내려받기, 현재 개수/비우기.
   - AddVerse: 자동 채우기 출처를 로컬 데이터로 교체. 데이터 없으면 자동채움 비활성 + 안내.
   - 본문 데이터는 사용자가 직접 확보(대한성서공회 허락/보유 소프트웨어/직접입력). 앱은 본문 미포함.
+
+## 3차 — 데이터 보존 + 어르신 쉬운 설치 (교인 배포 대비)
+
+배경: 데이터는 각 기기 localStorage(기록)·IndexedDB(본문)에만 저장 → 사라질 위험 있음
+(특히 iOS Safari는 홈화면 미설치 시 7일 ITP 삭제). 교인(어르신) 배포 예정.
+
+- 백업 내보내기/복원(선택됨): storage.ts exportBackupJson/importBackupJson,
+  components/ui/BackupSection.tsx → History 화면(데이터 있을 때 + 빈 상태 양쪽)에 배치.
+  백업은 기록(verses/sessions/exams)만. 본문은 재설치 가능하므로 제외.
+- 한 번 탭 설치(선택됨): 본문을 공개 저장소에 커밋하지 않는다(저작권). 대신 교회가 올린
+  URL에서 받아오기. bibleData.ts importFromUrl, ImportDataModal에 PRESET_URL(VITE_BIBLE_DATA_URL)
+  "한 번에 설치" 버튼 + 수동 URL 입력. URL 미설정이면 파일/수동URL만 노출.
+  → 목사님이 bible.json을 CORS 되는 주소(본인 GitHub raw 등)에 올리고 URL 주면 env 주입해 배포.
+- vite-env.d.ts 추가(import.meta.env 타입 + VITE_BIBLE_DATA_URL).

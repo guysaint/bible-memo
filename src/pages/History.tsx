@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useBibleStore } from '../store/useBibleStore';
 import { groupByGroupIndex } from '../hooks/useVerses';
 import { EmptyState } from '../components/ui/EmptyState';
+import { BackupSection } from '../components/ui/BackupSection';
 import { VerseDetailModal } from '../components/verse/VerseDetailModal';
 import { MODE_MAP } from '../components/practice/modeMeta';
 import { verseRef } from '../services/verseLabel';
@@ -40,11 +41,14 @@ export function History() {
 
   if (verses.length === 0) {
     return (
-      <EmptyState
-        icon="📊"
-        title="아직 기록이 없어요"
-        description="구절을 추가하고 연습을 시작하면 이곳에 통계와 이력이 쌓여요."
-      />
+      <div className="space-y-6">
+        <EmptyState
+          icon="📊"
+          title="아직 기록이 없어요"
+          description="구절을 추가하고 연습을 시작하면 이곳에 통계와 이력이 쌓여요. 예전에 쓰던 기기가 있다면 아래에서 백업을 복원할 수 있어요."
+        />
+        <BackupSection />
+      </div>
     );
   }
 
@@ -161,6 +165,8 @@ export function History() {
           </ul>
         )}
       </section>
+
+      <BackupSection />
 
       <VerseDetailModal verse={detail} sessions={sessions} onClose={() => setDetail(null)} />
     </div>

@@ -4,6 +4,7 @@ import { Modal } from '../ui/Modal';
 import { useToast } from '../ui/Toast';
 import {
   importVerses,
+  importFromUrl,
   clearVerses,
   parseVerseFile,
   type VerseRow,
@@ -16,6 +17,9 @@ interface ImportDataModalProps {
   onChanged: () => void;
 }
 
+// 교회가 본문 파일을 올려둔 주소(빌드 시 주입). 있으면 "한 번 탭 설치" 버튼이 보인다.
+const PRESET_URL = (import.meta.env.VITE_BIBLE_DATA_URL as string | undefined)?.trim();
+
 // 구조만 보여주는 샘플(실제 성경 본문 아님)
 const SAMPLE: VerseRow[] = [
   { book: '요한복음', chapter: 3, verse: 16, text: '여기에 요한복음 3장 16절 본문을 넣으세요' },
@@ -27,6 +31,7 @@ export function ImportDataModal({ open, onClose, count, onChanged }: ImportDataM
   const { showToast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [url, setUrl] = useState('');
 
   const handleFile = async (file: File) => {
     setBusy(true);
@@ -46,6 +51,21 @@ export function ImportDataModal({ open, onClose, count, onChanged }: ImportDataM
     } finally {
       setBusy(false);
       if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const handleUrl = async (target: string) => {
+    if (!target) return;
+    setBusy(true);
+    try {
+      const n = await importFromUrl(target);
+      showToast(`본문 ${n.toLocaleString()}구절을 설치했어요!`);
+      onChanged();
+    } catch (err) {
+      console.error('[import-url] 실패', err);
+      showToast('주소에서 본문을 받지 못했어요. 주소를 확인해 주세요.', 'error');
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -105,16 +125,27 @@ export function ImportDataModal({ open, onClose, count, onChanged }: ImportDataM
           </pre>
         </div>
 
+        {/* 한 번 탭 설치(교회가 주소를 미리 넣어둔 경우) */}
+        {PRESET_URL && (
+          <button
+            onClick={() => handleUrl(PRESET_URL)}
+            disabled={busy}
+            className="btn-primary w-full text-base"
+          >
+            {busy ? '설치하는 중…' : '📖 성경 본문 설치 (한 번에)'}
+          </button>
+        )}
+
         <div className="flex flex-col gap-2">
+          <p className="text-xs font-medium text-gray-400">
+            {PRESET_URL ? '다른 방법으로 가져오기' : '가져오기'}
+          </p>
           <button
             onClick={() => fileRef.current?.click()}
             disabled={busy}
-            className="btn-primary w-full"
+            className="btn-secondary w-full"
           >
-            {busy ? '가져오는 중…' : '📥 파일 선택해서 가져오기'}
-          </button>
-          <button onClick={downloadSample} className="btn-secondary w-full">
-            ⬇ 빈 양식·샘플 내려받기
+            📥 파일 선택해서 가져오기
           </button>
           <input
             ref={fileRef}
@@ -126,6 +157,29 @@ export function ImportDataModal({ open, onClose, count, onChanged }: ImportDataM
               if (f) handleFile(f);
             }}
           />
+
+          {/* 인터넷 주소로 가져오기 */}
+          <div className="flex gap-2">
+            <input
+              type="url"
+              inputMode="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="본문 파일 인터넷 주소(URL)"
+              className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-bible-primary"
+            />
+            <button
+              onClick={() => handleUrl(url.trim())}
+              disabled={busy || url.trim() === ''}
+              className="btn-secondary shrink-0 px-4 py-2 text-sm"
+            >
+              가져오기
+            </button>
+          </div>
+
+          <button onClick={downloadSample} className="text-xs font-medium text-bible-primary">
+            ⬇ 빈 양식·샘플 내려받기
+          </button>
         </div>
       </div>
     </Modal>

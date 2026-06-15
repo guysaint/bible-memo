@@ -70,6 +70,17 @@ export async function importVerses(rows: VerseRow[]): Promise<number> {
   });
 }
 
+/** 인터넷 주소(URL)에서 본문 파일을 받아 가져온다. 저장된 개수 반환. */
+export async function importFromUrl(url: string): Promise<number> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`다운로드 실패 (HTTP ${res.status})`);
+  const content = await res.text();
+  const name = url.split(/[?#]/)[0];
+  const rows = parseVerseFile(name, content);
+  if (rows.length === 0) throw new Error('가져올 본문을 찾지 못했어요');
+  return importVerses(rows);
+}
+
 /** 해당 구절(범위 포함) 본문을 한 문자열로. 없으면 null. */
 export async function getVerseText(
   book: string,
