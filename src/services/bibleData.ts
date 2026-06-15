@@ -1,11 +1,31 @@
 // 사용자가 가져온 성경 본문을 기기(IndexedDB)에만 저장하고 조회하는 서비스
 // 공개 사이트·저장소에는 본문이 포함되지 않는다. 개인·교회 사용 범위에서만 로컬에 보관.
+import { ALL_BOOKS } from '../data/bibleBooks';
 
 export interface VerseRow {
   book: string;
   chapter: number;
   verse: number;
   text: string;
+}
+
+// 대한성서공회 표준 책 약자(정경 순서). ALL_BOOKS와 1:1 대응.
+const BOOK_ABBR = [
+  '창', '출', '레', '민', '신', '수', '삿', '룻', '삼상', '삼하',
+  '왕상', '왕하', '대상', '대하', '스', '느', '에', '욥', '시', '잠',
+  '전', '아', '사', '렘', '애', '겔', '단', '호', '욜', '암',
+  '옵', '욘', '미', '나', '합', '습', '학', '슥', '말',
+  '마', '막', '눅', '요', '행', '롬', '고전', '고후', '갈', '엡',
+  '빌', '골', '살전', '살후', '딤전', '딤후', '딛', '몬', '히', '약',
+  '벧전', '벧후', '요일', '요이', '요삼', '유', '계',
+];
+
+// 약자 → 앱의 전체 책 이름. 약자가 전체 이름과 1:1로 맞지 않으면 비어 있게 둔다.
+const abbrToName: Record<string, string> = {};
+if (BOOK_ABBR.length === ALL_BOOKS.length) {
+  BOOK_ABBR.forEach((a, i) => {
+    abbrToName[a] = ALL_BOOKS[i].name;
+  });
 }
 
 const DB_NAME = 'bible-memo-text';
@@ -138,10 +158,28 @@ export function parseVerseFile(filename: string, content: string): VerseRow[] {
 function parseJson(text: string): unknown[] {
   const data = JSON.parse(text);
   if (Array.isArray(data)) return data;
-  if (data && Array.isArray((data as { verses?: unknown[] }).verses)) {
-    return (data as { verses: unknown[] }).verses;
+  if (data && typeof data === 'object') {
+    if (Array.isArray((data as { verses?: unknown[] }).verses)) {
+      return (data as { verses: unknown[] }).verses;
+    }
+    // 맵 형식: { "창1:1": "본문", "요3:16": "본문", ... }
+    return parseVerseMap(data as Record<string, unknown>);
   }
   return [];
+}
+
+// "창1:1" / "신6:18-19" 키를 약자·장·절로 풀어 전체 책 이름으로 매핑한다.
+const KEY_RE = /^(\D+?)(\d+):(\d+)(?:-\d+)?$/;
+function parseVerseMap(map: Record<string, unknown>): unknown[] {
+  const out: unknown[] = [];
+  for (const [k, value] of Object.entries(map)) {
+    const m = KEY_RE.exec(k.trim());
+    if (!m) continue;
+    const book = abbrToName[m[1]];
+    if (!book) continue; // 모르는 약자는 건너뛴다
+    out.push({ book, chapter: m[2], verse: m[3], text: value });
+  }
+  return out;
 }
 
 function parseDelimited(text: string): unknown[] {
