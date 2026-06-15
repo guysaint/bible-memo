@@ -32,6 +32,9 @@ const DB_NAME = 'bible-memo-text';
 const STORE = 'verses';
 const DB_VERSION = 1;
 
+// 앱에 내장된 개역개정 본문 파일 주소(대한성서공회 사용 허락). 첫 실행 시 자동 설치에 사용.
+export const BUNDLED_BIBLE_URL = `${import.meta.env.BASE_URL}bible.json`;
+
 function key(book: string, chapter: number, verse: number): string {
   return `${book}|${chapter}|${verse}`;
 }

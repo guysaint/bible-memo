@@ -54,3 +54,16 @@
   "한 번에 설치" 버튼 + 수동 URL 입력. URL 미설정이면 파일/수동URL만 노출.
   → 목사님이 bible.json을 CORS 되는 주소(본인 GitHub raw 등)에 올리고 URL 주면 env 주입해 배포.
 - vite-env.d.ts 추가(import.meta.env 타입 + VITE_BIBLE_DATA_URL).
+
+## 4차 — 대한성서공회 허락 받음 → 앱 내장 전환
+
+허락 조건: 출처 표기 "개역개정 ⓒ 대한성서공회"만. → 정식 내장.
+- public/bible.json (5MB, 31088구절)을 앱에 포함. vite workbox globPatterns에 json 추가 +
+  maximumFileSizeToCacheInBytes 8MB → 오프라인 캐시 포함.
+- BUNDLED_BIBLE_URL = import.meta.env.BASE_URL + 'bible.json' (자기 출처).
+- useAutoInstallBible: 첫 실행 시 countVerses()==0이면 자동 importFromUrl(BUNDLED) → 토스트.
+  모듈 레벨 attempted 플래그로 1회만(StrictMode 대비), 실패 시 플래그 복구해 다음 실행 재시도.
+- App.tsx 하단에 "개역개정 ⓒ 대한성서공회" 출처 표기(전 화면 공통).
+- ImportDataModal: 외부 env URL 제거, PRESET_URL=BUNDLED. "개역개정 본문 다시 설치" 버튼.
+- deploy.yml의 VITE_BIBLE_DATA_URL 제거, vite-env.d.ts는 reference만 남김.
+- 외부 guysaint/bible-data repo는 더 이상 사용 안 함 → 비공개 전환 예정.

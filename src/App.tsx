@@ -3,6 +3,7 @@ import { TabBar } from './components/layout/TabBar';
 import { ToastProvider } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { NavigationProvider, useNavigation } from './hooks/useNavigation';
+import { useAutoInstallBible } from './hooks/useAutoInstallBible';
 import { Home } from './pages/Home';
 import { AddVerse } from './pages/AddVerse';
 import { Practice } from './pages/Practice';
@@ -11,6 +12,7 @@ import { History } from './pages/History';
 
 function AppShell() {
   const { tab, navigate } = useNavigation();
+  useAutoInstallBible();
 
   return (
     <div className="min-h-screen bg-bible-bg">
@@ -21,6 +23,9 @@ function AppShell() {
         {tab === 'practice' && <Practice />}
         {tab === 'exam' && <Exam />}
         {tab === 'history' && <History />}
+        <p className="mt-8 text-center text-[11px] text-gray-400">
+          개역개정 ⓒ 대한성서공회
+        </p>
       </main>
       <TabBar active={tab} onChange={(t) => navigate(t)} />
     </div>

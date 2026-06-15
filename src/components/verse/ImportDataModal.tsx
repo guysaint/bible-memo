@@ -7,6 +7,7 @@ import {
   importFromUrl,
   clearVerses,
   parseVerseFile,
+  BUNDLED_BIBLE_URL,
   type VerseRow,
 } from '../../services/bibleData';
 
@@ -17,8 +18,8 @@ interface ImportDataModalProps {
   onChanged: () => void;
 }
 
-// 교회가 본문 파일을 올려둔 주소(빌드 시 주입). 있으면 "한 번 탭 설치" 버튼이 보인다.
-const PRESET_URL = (import.meta.env.VITE_BIBLE_DATA_URL as string | undefined)?.trim();
+// 앱에 내장된 개역개정 본문(대한성서공회 사용 허락). "다시 설치"용.
+const PRESET_URL = BUNDLED_BIBLE_URL;
 
 // 구조만 보여주는 샘플(실제 성경 본문 아님)
 const SAMPLE: VerseRow[] = [
@@ -91,9 +92,8 @@ export function ImportDataModal({ open, onClose, count, onChanged }: ImportDataM
     <Modal open={open} onClose={onClose} title="본문 데이터 가져오기">
       <div className="space-y-4 text-sm">
         <p className="leading-relaxed text-gray-600">
-          정당하게 보유하신 성경 본문 파일을 가져오면, 책·장·절을 고를 때 본문이 자동으로
-          채워져요. 가져온 본문은 <b>이 기기에만</b> 저장되고 인터넷이나 공개 사이트에는 올라가지
-          않습니다.
+          개역개정 본문은 앱에 들어 있어 처음 실행할 때 자동으로 준비돼요. 아래 버튼으로 다시
+          설치하거나, 다른 번역본 파일을 가져올 수도 있어요. 본문은 <b>이 기기에만</b> 저장됩니다.
         </p>
 
         {count > 0 ? (
@@ -125,16 +125,14 @@ export function ImportDataModal({ open, onClose, count, onChanged }: ImportDataM
           </pre>
         </div>
 
-        {/* 한 번 탭 설치(교회가 주소를 미리 넣어둔 경우) */}
-        {PRESET_URL && (
-          <button
-            onClick={() => handleUrl(PRESET_URL)}
-            disabled={busy}
-            className="btn-primary w-full text-base"
-          >
-            {busy ? '설치하는 중…' : '📖 성경 본문 설치 (한 번에)'}
-          </button>
-        )}
+        {/* 내장 개역개정 다시 설치 */}
+        <button
+          onClick={() => handleUrl(PRESET_URL)}
+          disabled={busy}
+          className="btn-primary w-full text-base"
+        >
+          {busy ? '설치하는 중…' : '📖 개역개정 본문 설치 (개역개정 ⓒ 대한성서공회)'}
+        </button>
 
         <div className="flex flex-col gap-2">
           <p className="text-xs font-medium text-gray-400">

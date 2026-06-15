@@ -28,7 +28,6 @@ jobs:
         run: npm run build
         env:
           GITHUB_PAGES: '1'
-          VITE_BIBLE_DATA_URL: 'https://raw.githubusercontent.com/guysaint/bible-data/main/bible.json'
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
