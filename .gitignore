@@ -25,3 +25,6 @@ dist-ssr
 
 # PWA generated service worker artifacts (built into dist)
 dev-dist
+
+# TypeScript incremental build info
+*.tsbuildinfo
