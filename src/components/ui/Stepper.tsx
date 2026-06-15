@@ -29,6 +29,7 @@ export function Stepper({ label, value, onChange, min = 1, max = 9999 }: Stepper
           min={min}
           max={max}
           aria-label={label}
+          onFocus={(e) => e.target.select()}
           onChange={(e) => set(parseInt(e.target.value, 10) || min)}
           className="w-full min-w-0 border-x border-gray-100 bg-white py-2 text-center text-base font-semibold text-gray-800 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
         />

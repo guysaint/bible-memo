@@ -1,12 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { OLD_TESTAMENT, NEW_TESTAMENT, findBook } from '../data/bibleBooks';
 import { Stepper } from '../components/ui/Stepper';
 import { useBibleStore, calculateMeta } from '../store/useBibleStore';
 import { useToast } from '../components/ui/Toast';
 import { useNavigation } from '../hooks/useNavigation';
+import { fetchVerseText, TEXT_VERSION_LABEL } from '../services/bibleText';
 import { GROUP_SIZE } from '../types';
 
 const ORDINAL = ['', '첫', '두', '세', '네'];
+
+type FetchStatus = 'idle' | 'loading' | 'filled' | 'notfound' | 'error';
 
 export function AddVerse() {
   const verses = useBibleStore((s) => s.verses);
@@ -20,8 +23,41 @@ export function AddVerse() {
   const [useRange, setUseRange] = useState(false);
   const [verseEnd, setVerseEnd] = useState(2);
   const [text, setText] = useState('');
+  const [fetchStatus, setFetchStatus] = useState<FetchStatus>('idle');
 
   const maxChapter = useMemo(() => findBook(book)?.chapters ?? 150, [book]);
+
+  // 책·장·절 선택이 바뀌면 본문을 자동으로 불러와 채운다(개역한글).
+  // 사용자가 직접 고친 본문도, 선택을 다시 바꾸면 새로 덮어쓴다.
+  const reqIdRef = useRef(0);
+  useEffect(() => {
+    if (!book) {
+      setFetchStatus('idle');
+      return;
+    }
+    const end = useRange ? verseEnd : undefined;
+    const reqId = ++reqIdRef.current;
+    setFetchStatus('loading');
+
+    const timer = window.setTimeout(() => {
+      fetchVerseText(book, chapter, verseStart, end)
+        .then((result) => {
+          if (reqId !== reqIdRef.current) return; // 최신 요청만 반영
+          if (result) {
+            setText(result);
+            setFetchStatus('filled');
+          } else {
+            setFetchStatus('notfound');
+          }
+        })
+        .catch(() => {
+          if (reqId !== reqIdRef.current) return;
+          setFetchStatus('error');
+        });
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [book, chapter, verseStart, verseEnd, useRange]);
 
   // 다음 구절의 주차/묶음/순서 미리보기
   const meta = useMemo(() => calculateMeta(verses.length), [verses.length]);
@@ -47,6 +83,7 @@ export function AddVerse() {
     // 폼 초기화
     setText('');
     setUseRange(false);
+    setFetchStatus('idle');
     navigate('home');
   };
 
@@ -139,7 +176,7 @@ export function AddVerse() {
       {/* 본문 */}
       <div>
         <div className="mb-1 flex items-center justify-between">
-          <label className="text-xs font-medium text-gray-500">본문 (개역개정)</label>
+          <label className="text-xs font-medium text-gray-500">본문</label>
           <span
             className={`text-xs ${trimmedLen >= 10 ? 'text-gray-400' : 'text-bible-accent'}`}
           >
@@ -148,11 +185,21 @@ export function AddVerse() {
         </div>
         <textarea
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            setFetchStatus('idle');
+          }}
           rows={6}
-          placeholder="암송할 본문을 입력하세요 (10자 이상)"
+          placeholder="책·장·절을 고르면 본문이 자동으로 채워져요 (직접 입력·수정 가능)"
           className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3 py-3 font-serif text-base leading-relaxed text-gray-800 outline-none focus:border-bible-primary"
         />
+        <p className="mt-1 text-xs text-gray-400">
+          {fetchStatus === 'loading' && '본문 불러오는 중…'}
+          {fetchStatus === 'filled' && `✓ ${TEXT_VERSION_LABEL} 본문을 자동으로 채웠어요 (필요하면 수정하세요)`}
+          {fetchStatus === 'notfound' && '본문을 찾지 못했어요. 직접 입력해 주세요.'}
+          {fetchStatus === 'error' && '본문을 불러오지 못했어요(네트워크). 직접 입력해 주세요.'}
+          {fetchStatus === 'idle' && '개역한글 기준으로 자동 채워집니다. 다른 번역은 직접 입력하세요.'}
+        </p>
       </div>
 
       {/* 자동 계산 안내 */}
