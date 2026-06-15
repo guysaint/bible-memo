@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useBibleStore } from '../store/useBibleStore';
 import { useNavigation } from '../hooks/useNavigation';
+import { groupByGroupIndex } from '../hooks/useVerses';
 import { VerseCard } from '../components/verse/VerseCard';
 import { GroupProgress } from '../components/verse/GroupProgress';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -8,15 +9,23 @@ import { ModeSelectModal } from '../components/practice/ModeSelectModal';
 import { MODE_MAP } from '../components/practice/modeMeta';
 import { verseRef } from '../services/verseLabel';
 import { formatShortDate } from '../services/datetime';
-import type { SessionMode, Verse } from '../types';
+import { GROUP_SIZE, type SessionMode, type Verse } from '../types';
 
 export function Home() {
   const verses = useBibleStore((s) => s.verses);
   const sessions = useBibleStore((s) => s.sessions);
-  const getCurrentGroup = useBibleStore((s) => s.getCurrentGroup);
   const { navigate } = useNavigation();
 
   const [modalVerse, setModalVerse] = useState<Verse | null>(null);
+  // 선택 상태: null이면 각각 현재 묶음 / 최신 구절을 가리킨다.
+  const [selectedGroupIndex, setSelectedGroupIndex] = useState<number | null>(null);
+  const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
+
+  const groups = useMemo(() => groupByGroupIndex(verses), [verses]);
+  const allGroupIndexes = useMemo(
+    () => [...groups.keys()].sort((a, b) => a - b),
+    [groups],
+  );
 
   if (verses.length === 0) {
     return (
@@ -30,15 +39,22 @@ export function Home() {
     );
   }
 
-  const { groupIndex, verses: groupVerses, isComplete } = getCurrentGroup();
-  // 가장 최근에 추가된 구절을 '이번 주 말씀'으로
-  const currentVerse = verses[verses.length - 1];
+  // 가장 최근에 추가된 구절과 그 묶음을 기본값으로
+  const latestVerse = verses[verses.length - 1];
+  const currentGroupIndex = Math.max(...allGroupIndexes);
+
+  const groupIndex = selectedGroupIndex ?? currentGroupIndex;
+  const groupVerses = groups.get(groupIndex) ?? [];
+  const isComplete = groupVerses.length >= GROUP_SIZE;
+
+  const verseById = (id: string) => verses.find((v) => v.id === id);
+  // 표시할 구절: 선택한 구절 → 없으면 최신 구절
+  const displayVerse = (selectedVerseId && verseById(selectedVerseId)) || latestVerse;
+  const isLatest = displayVerse.id === latestVerse.id;
 
   const recentSessions = [...sessions]
     .sort((a, b) => +new Date(b.sessionDate) - +new Date(a.sessionDate))
     .slice(0, 3);
-
-  const verseById = (id: string) => verses.find((v) => v.id === id);
 
   const handleSelectMode = (mode: SessionMode) => {
     if (!modalVerse) return;
@@ -49,14 +65,16 @@ export function Home() {
 
   return (
     <div className="space-y-5">
-      {/* 이번 주 말씀 */}
+      {/* 이번 주 말씀 (또는 선택한 말씀) */}
       <section>
-        <h2 className="mb-2 px-1 text-sm font-semibold text-gray-500">이번 주 말씀</h2>
+        <h2 className="mb-2 px-1 text-sm font-semibold text-gray-500">
+          {isLatest ? '이번 주 말씀' : '선택한 말씀'}
+        </h2>
         <VerseCard
-          verse={currentVerse}
+          verse={displayVerse}
           footer={
             <button
-              onClick={() => setModalVerse(currentVerse)}
+              onClick={() => setModalVerse(displayVerse)}
               className="btn-primary w-full"
             >
               오늘 암송하기
@@ -70,7 +88,17 @@ export function Home() {
         groupIndex={groupIndex}
         verses={groupVerses}
         isComplete={isComplete}
+        selectedVerseId={displayVerse.id}
+        onSelectVerse={(v) => setSelectedVerseId(v.id)}
+        onAddSlot={() => navigate('add')}
         onStartExam={() => navigate('exam', { examGroupIndex: groupIndex })}
+        allGroupIndexes={allGroupIndexes}
+        onSelectGroup={(gi) => {
+          setSelectedGroupIndex(gi);
+          // 묶음을 바꾸면 그 묶음의 첫 구절을 카드에 표시
+          const first = groups.get(gi)?.[0];
+          setSelectedVerseId(first ? first.id : null);
+        }}
       />
 
       {/* 최근 연습 기록 */}
