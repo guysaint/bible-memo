@@ -1,15 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { OLD_TESTAMENT, NEW_TESTAMENT, findBook } from '../data/bibleBooks';
 import { Stepper } from '../components/ui/Stepper';
 import { useBibleStore, calculateMeta } from '../store/useBibleStore';
 import { useToast } from '../components/ui/Toast';
 import { useNavigation } from '../hooks/useNavigation';
-import { fetchVerseText, TEXT_VERSION_LABEL } from '../services/bibleText';
+import { getVerseText, countVerses } from '../services/bibleData';
+import { ImportDataModal } from '../components/verse/ImportDataModal';
 import { GROUP_SIZE } from '../types';
 
 const ORDINAL = ['', '첫', '두', '세', '네'];
 
-type FetchStatus = 'idle' | 'loading' | 'filled' | 'notfound' | 'error';
+type FetchStatus = 'idle' | 'loading' | 'filled' | 'notfound';
 
 export function AddVerse() {
   const verses = useBibleStore((s) => s.verses);
@@ -25,13 +26,25 @@ export function AddVerse() {
   const [text, setText] = useState('');
   const [fetchStatus, setFetchStatus] = useState<FetchStatus>('idle');
 
+  // 가져온 본문 데이터(IndexedDB) 개수 + 가져오기 모달
+  const [dataCount, setDataCount] = useState(0);
+  const [importOpen, setImportOpen] = useState(false);
+  const refreshCount = useCallback(() => {
+    countVerses()
+      .then(setDataCount)
+      .catch(() => setDataCount(0));
+  }, []);
+  useEffect(() => {
+    refreshCount();
+  }, [refreshCount]);
+
   const maxChapter = useMemo(() => findBook(book)?.chapters ?? 150, [book]);
 
-  // 책·장·절 선택이 바뀌면 본문을 자동으로 불러와 채운다(개역한글).
+  // 책·장·절 선택이 바뀌면 가져온 로컬 본문에서 자동으로 채운다.
   // 사용자가 직접 고친 본문도, 선택을 다시 바꾸면 새로 덮어쓴다.
   const reqIdRef = useRef(0);
   useEffect(() => {
-    if (!book) {
+    if (!book || dataCount === 0) {
       setFetchStatus('idle');
       return;
     }
@@ -40,7 +53,7 @@ export function AddVerse() {
     setFetchStatus('loading');
 
     const timer = window.setTimeout(() => {
-      fetchVerseText(book, chapter, verseStart, end)
+      getVerseText(book, chapter, verseStart, end)
         .then((result) => {
           if (reqId !== reqIdRef.current) return; // 최신 요청만 반영
           if (result) {
@@ -52,12 +65,12 @@ export function AddVerse() {
         })
         .catch(() => {
           if (reqId !== reqIdRef.current) return;
-          setFetchStatus('error');
+          setFetchStatus('notfound');
         });
     }, 250);
 
     return () => window.clearTimeout(timer);
-  }, [book, chapter, verseStart, verseEnd, useRange]);
+  }, [book, chapter, verseStart, verseEnd, useRange, dataCount]);
 
   // 다음 구절의 주차/묶음/순서 미리보기
   const meta = useMemo(() => calculateMeta(verses.length), [verses.length]);
@@ -190,16 +203,27 @@ export function AddVerse() {
             setFetchStatus('idle');
           }}
           rows={6}
-          placeholder="책·장·절을 고르면 본문이 자동으로 채워져요 (직접 입력·수정 가능)"
+          placeholder="본문을 직접 입력하거나, 본문 데이터를 가져오면 자동으로 채워져요"
           className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3 py-3 font-serif text-base leading-relaxed text-gray-800 outline-none focus:border-bible-primary"
         />
-        <p className="mt-1 text-xs text-gray-400">
-          {fetchStatus === 'loading' && '본문 불러오는 중…'}
-          {fetchStatus === 'filled' && `✓ ${TEXT_VERSION_LABEL} 본문을 자동으로 채웠어요 (필요하면 수정하세요)`}
-          {fetchStatus === 'notfound' && '본문을 찾지 못했어요. 직접 입력해 주세요.'}
-          {fetchStatus === 'error' && '본문을 불러오지 못했어요(네트워크). 직접 입력해 주세요.'}
-          {fetchStatus === 'idle' && '개역한글 기준으로 자동 채워집니다. 다른 번역은 직접 입력하세요.'}
-        </p>
+        <div className="mt-1 flex items-start justify-between gap-2">
+          <p className="text-xs text-gray-400">
+            {fetchStatus === 'loading' && '본문 불러오는 중…'}
+            {fetchStatus === 'filled' && '✓ 가져온 본문을 자동으로 채웠어요 (필요하면 수정하세요)'}
+            {fetchStatus === 'notfound' && '이 절을 데이터에서 못 찾았어요. 직접 입력해 주세요.'}
+            {fetchStatus === 'idle' &&
+              (dataCount > 0
+                ? `내 본문 ${dataCount.toLocaleString()}구절 사용 중`
+                : '본문 데이터를 가져오면 자동으로 채워져요.')}
+          </p>
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="shrink-0 text-xs font-medium text-bible-primary"
+          >
+            본문 데이터 가져오기
+          </button>
+        </div>
       </div>
 
       {/* 자동 계산 안내 */}
@@ -214,6 +238,13 @@ export function AddVerse() {
       <button onClick={handleSubmit} disabled={!isValid} className="btn-primary w-full">
         이번 주 말씀 추가
       </button>
+
+      <ImportDataModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        count={dataCount}
+        onChanged={refreshCount}
+      />
     </div>
   );
 }

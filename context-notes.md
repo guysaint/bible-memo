@@ -25,3 +25,18 @@
   - 현재(빈) 칸 클릭 → 추가 탭 이동.
   - 묶음 2개 이상이면 칩으로 묶음 전환(지난 묶음 복습).
 - GroupProgress는 프레젠테이션 유지 + 클릭 핸들러 props만 추가(surgical).
+
+## 2차 수정 (개역개정 합법 전환 + Stepper 재수정)
+
+- Stepper '1' 안 지워짐 재수정: type=number는 select()가 안 먹어서(iOS/Chrome) 실패.
+  → type=text + inputMode=numeric, 포커스 시 requestAnimationFrame으로 select()
+  (클릭 후 mouseup이 선택을 풀기 때문에 한 틱 미룸). 편집 중 빈 칸 허용 위해 내부 draft 상태.
+  preview에서 '1' 위에 '20' 입력 시 '20'으로 대체 확인.
+- 개역한글 API(getbible)는 사용자가 "개역한글은 의미 없음"이라 해서 제거(services/bibleText.ts 삭제).
+- 합법 전환 방식: 본문을 앱/저장소에 넣지 않고, 사용자가 정당하게 보유한 본문을
+  기기(IndexedDB)에만 가져오는 방식 채택. 공개 사이트에는 저작물이 없으므로 배포가 깨끗함.
+  - services/bibleData.ts: IndexedDB(`bible-memo-text`/`verses`), import/get/count/clear + 파일 파서
+    (JSON 배열·{verses}, CSV/TSV 자동 구분자, 본문 속 구분자 보존 위해 앞 3필드만 분할).
+  - components/verse/ImportDataModal.tsx: 파일 업로드, 빈 양식·샘플 내려받기, 현재 개수/비우기.
+  - AddVerse: 자동 채우기 출처를 로컬 데이터로 교체. 데이터 없으면 자동채움 비활성 + 안내.
+  - 본문 데이터는 사용자가 직접 확보(대한성서공회 허락/보유 소프트웨어/직접입력). 앱은 본문 미포함.
