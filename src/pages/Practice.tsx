@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useBibleStore } from '../store/useBibleStore';
 import { useNavigation } from '../hooks/useNavigation';
+import { groupByGroupIndex } from '../hooks/useVerses';
 import { useToast } from '../components/ui/Toast';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ModeSelectModal } from '../components/practice/ModeSelectModal';
@@ -13,7 +14,7 @@ import { verseRef } from '../services/verseLabel';
 import { formatShortDate } from '../services/datetime';
 import type { SessionMode, Verse } from '../types';
 
-type Segment = 'current' | 'all';
+type GroupFilter = number | 'all';
 
 export function Practice() {
   const verses = useBibleStore((s) => s.verses);
@@ -24,7 +25,8 @@ export function Practice() {
   const { params, clearParams } = useNavigation();
   const { showToast } = useToast();
 
-  const [segment, setSegment] = useState<Segment>('current');
+  // null이면 현재(최신) 묶음을 가리킨다. 숫자=특정 묶음, 'all'=전체
+  const [selectedGroup, setSelectedGroup] = useState<GroupFilter | null>(null);
   const [pickerVerse, setPickerVerse] = useState<Verse | null>(null);
   const [active, setActive] = useState<{ verse: Verse; mode: SessionMode } | null>(null);
 
@@ -124,10 +126,16 @@ export function Practice() {
 
   // 구절 리스트
   const current = getCurrentGroup();
+  const groups = useMemo(() => groupByGroupIndex(verses), [verses]);
+  const allGroupIndexes = useMemo(
+    () => [...groups.keys()].sort((a, b) => a - b),
+    [groups],
+  );
+  const effectiveGroup: GroupFilter = selectedGroup ?? current.groupIndex;
   const list =
-    segment === 'current'
-      ? current.verses
-      : [...verses].sort((a, b) => b.weekNumber - a.weekNumber);
+    effectiveGroup === 'all'
+      ? [...verses].sort((a, b) => b.weekNumber - a.weekNumber)
+      : groups.get(effectiveGroup) ?? [];
 
   const lastSessionOf = (verseId: string) =>
     sessions
@@ -138,24 +146,31 @@ export function Practice() {
     <div className="space-y-4">
       <h2 className="text-lg font-bold text-gray-900">암송 연습</h2>
 
-      {/* 세그먼트 탭 */}
-      <div className="flex rounded-xl bg-gray-100 p-1">
-        {(
-          [
-            ['current', `현재 묶음 (${current.groupIndex})`],
-            ['all', '전체'],
-          ] as const
-        ).map(([key, label]) => (
+      {/* 묶음 선택 칩 (이전 묶음도 골라서 연습) */}
+      <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+        {allGroupIndexes.map((gi) => (
           <button
-            key={key}
-            onClick={() => setSegment(key)}
-            className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
-              segment === key ? 'bg-white text-bible-primary shadow-sm' : 'text-gray-500'
+            key={gi}
+            onClick={() => setSelectedGroup(gi)}
+            className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+              effectiveGroup === gi
+                ? 'bg-bible-primary text-white'
+                : 'bg-gray-100 text-gray-500'
             }`}
           >
-            {label}
+            {gi}묶음{gi === current.groupIndex ? ' (현재)' : ''}
           </button>
         ))}
+        <button
+          onClick={() => setSelectedGroup('all')}
+          className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+            effectiveGroup === 'all'
+              ? 'bg-bible-primary text-white'
+              : 'bg-gray-100 text-gray-500'
+          }`}
+        >
+          전체
+        </button>
       </div>
 
       {list.length === 0 ? (
