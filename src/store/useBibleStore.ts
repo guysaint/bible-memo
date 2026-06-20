@@ -35,11 +35,18 @@ export interface AppStats {
   passRate: number; // 0~100
 }
 
+/** 사용자가 수정 가능한 구절 필드 */
+export type EditVerseInput = Pick<
+  Verse,
+  'book' | 'chapter' | 'verseStart' | 'verseEnd' | 'text'
+>;
+
 interface BibleStore extends AppState {
   addVerse: (input: AddVerseInput) => Verse;
   addSession: (session: Omit<MemorizationSession, 'id'>) => void;
   addExam: (exam: Omit<GroupExam, 'id'>) => void;
   markMastered: (verseId: string) => void;
+  updateVerse: (verseId: string, patch: EditVerseInput) => void;
 
   // 셀렉터
   getGroupVerses: (groupIndex: number) => Verse[];
@@ -88,6 +95,28 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
     const full: GroupExam = { ...exam, id: nanoid() };
     set((s) => {
       const next = { ...s, exams: [...s.exams, full] };
+      persist(next);
+      return next;
+    });
+  },
+
+  updateVerse: (verseId, patch) => {
+    set((s) => {
+      const next = {
+        ...s,
+        verses: s.verses.map((v) =>
+          v.id === verseId
+            ? {
+                ...v,
+                book: patch.book,
+                chapter: patch.chapter,
+                verseStart: patch.verseStart,
+                verseEnd: patch.verseEnd,
+                text: patch.text,
+              }
+            : v,
+        ),
+      };
       persist(next);
       return next;
     });

@@ -66,4 +66,18 @@
 - App.tsx 하단에 "개역개정 ⓒ 대한성서공회" 출처 표기(전 화면 공통).
 - ImportDataModal: 외부 env URL 제거, PRESET_URL=BUNDLED. "개역개정 본문 다시 설치" 버튼.
 - deploy.yml의 VITE_BIBLE_DATA_URL 제거, vite-env.d.ts는 reference만 남김.
-- 외부 guysaint/bible-data repo는 더 이상 사용 안 함 → 비공개 전환 예정.
+- 외부 guysaint/bible-data repo는 더 이상 사용 안 함 → 비공개 전환 완료.
+
+## 5차 — 시험 IME 버그 + 구절 수정 기능
+
+- 버그: 시험 마지막 구절 무조건 0점. 원인은 한글 IME + 제어형 textarea(value={input}).
+  마지막 구절은 입력 직후 제출→결과로 넘어가 조합 중 값이 state 반영 전에 채점됨.
+  수정: ExamSession/TypingMode textarea를 비제어(ref + defaultValue, key=index)로 바꾸고
+  제출 시 taRef.current.value(DOM 값) 직접 읽음. 버튼 enable은 onChange의 hasText로.
+  프로그램적 입력으로는 재현 안 됨(이미 100점) → DOM 값 읽기로 강건하게 해결.
+- 구절 수정: store updateVerse(verseId, {book,chapter,verseStart,verseEnd,text}) 추가
+  (weekNumber/groupIndex/positionInGroup/id/addedDate/isMastered 보존).
+  VerseDetailModal에 상세/수정 두 화면. 수정 본문 textarea도 ref+defaultValue(IME 안전).
+- 로컬 빌드 환경 이슈: 빌드용 node가 x64(Rosetta)인데 npm은 arm64로 설치 →
+  @rollup/rollup-darwin-x64 누락. `npm i @rollup/rollup-darwin-x64@VER --no-save --cpu=x64 --os=darwin --force`로 해결.
+  CI(리눅스)는 npm ci로 정상. package-lock.json 재생성됨.
