@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Verse } from '../../types';
 import { scoreText, type WordResult } from '../../services/scoring';
 import { verseRef } from '../../services/verseLabel';
@@ -13,19 +13,22 @@ interface TypingModeProps {
 }
 
 export function TypingMode({ verse, onScored, onNext }: TypingModeProps) {
-  const [input, setInput] = useState('');
+  // 한글 IME 조합 입력 문제를 피하려고 제출 시 DOM 값을 직접 읽는다.
+  const taRef = useRef<HTMLTextAreaElement>(null);
+  const [hasText, setHasText] = useState(false);
   const [result, setResult] = useState<{ score: number; results: WordResult[] } | null>(null);
 
   const handleScore = () => {
-    if (input.trim().length === 0) return;
-    const r = scoreText(input, verse.text);
+    const text = taRef.current?.value ?? '';
+    if (text.trim().length === 0) return;
+    const r = scoreText(text, verse.text);
     setResult(r);
     onScored?.(r.score);
   };
 
   const retry = () => {
     setResult(null);
-    setInput('');
+    setHasText(false);
   };
 
   return (
@@ -38,8 +41,9 @@ export function TypingMode({ verse, onScored, onNext }: TypingModeProps) {
       {!result ? (
         <>
           <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
+            ref={taRef}
+            defaultValue=""
+            onChange={(e) => setHasText(e.target.value.trim().length > 0)}
             rows={8}
             autoFocus
             placeholder="외운 본문을 입력하세요…"
@@ -47,7 +51,7 @@ export function TypingMode({ verse, onScored, onNext }: TypingModeProps) {
           />
           <button
             onClick={handleScore}
-            disabled={input.trim().length === 0}
+            disabled={!hasText}
             className="btn-primary w-full"
           >
             채점하기

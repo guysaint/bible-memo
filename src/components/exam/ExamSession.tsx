@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Verse } from '../../types';
 import { scoreText } from '../../services/scoring';
 import { verseRef } from '../../services/verseLabel';
@@ -14,16 +14,21 @@ interface ExamSessionProps {
 export function ExamSession({ groupIndex, verses, onComplete, onCancel }: ExamSessionProps) {
   const [index, setIndex] = useState(0);
   const [scores, setScores] = useState<Record<string, number>>({});
-  const [input, setInput] = useState('');
+  // 한글 IME 조합 입력이 state 반영 전에 채점되는 문제를 피하려고
+  // 제어형 value 대신 ref로 두고 제출 시 DOM 값을 직접 읽는다.
+  const taRef = useRef<HTMLTextAreaElement>(null);
+  const [hasText, setHasText] = useState(false);
 
   const verse = verses[index];
   const total = verses.length;
 
   const handleSubmit = () => {
-    const { score } = scoreText(input, verse.text);
+    const text = taRef.current?.value ?? '';
+    if (text.trim().length === 0) return;
+    const { score } = scoreText(text, verse.text);
     const nextScores = { ...scores, [verse.id]: score };
     setScores(nextScores);
-    setInput('');
+    setHasText(false);
 
     if (index + 1 < total) {
       setIndex(index + 1);
@@ -51,8 +56,10 @@ export function ExamSession({ groupIndex, verses, onComplete, onCancel }: ExamSe
       </div>
 
       <textarea
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
+        key={index}
+        ref={taRef}
+        defaultValue=""
+        onChange={(e) => setHasText(e.target.value.trim().length > 0)}
         rows={8}
         autoFocus
         placeholder="본문을 입력하세요…"
@@ -61,7 +68,7 @@ export function ExamSession({ groupIndex, verses, onComplete, onCancel }: ExamSe
 
       <button
         onClick={handleSubmit}
-        disabled={input.trim().length === 0}
+        disabled={!hasText}
         className="btn-primary w-full"
       >
         {index + 1 < total ? '제출하고 다음 구절' : '제출하고 결과 보기'}
