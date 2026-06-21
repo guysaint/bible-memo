@@ -34,6 +34,13 @@ export function Practice() {
   const startRef = useRef<number>(0);
   const lastScoreRef = useRef<number | undefined>(undefined);
 
+  // 훅은 항상 같은 순서로 호출되어야 하므로 조기 return 이전에 둔다.
+  const groups = useMemo(() => groupByGroupIndex(verses), [verses]);
+  const allGroupIndexes = useMemo(
+    () => [...groups.keys()].sort((a, b) => a - b),
+    [groups],
+  );
+
   // 네비게이션 파라미터로 진입 시 자동 시작
   useEffect(() => {
     if (params.practiceVerseId) {
@@ -126,11 +133,6 @@ export function Practice() {
 
   // 구절 리스트
   const current = getCurrentGroup();
-  const groups = useMemo(() => groupByGroupIndex(verses), [verses]);
-  const allGroupIndexes = useMemo(
-    () => [...groups.keys()].sort((a, b) => a - b),
-    [groups],
-  );
   const effectiveGroup: GroupFilter = selectedGroup ?? current.groupIndex;
   const list =
     effectiveGroup === 'all'
