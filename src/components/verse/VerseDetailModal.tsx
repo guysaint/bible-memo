@@ -6,6 +6,7 @@ import { Stepper } from '../ui/Stepper';
 import { MODE_MAP } from '../practice/modeMeta';
 import { OLD_TESTAMENT, NEW_TESTAMENT, findBook } from '../../data/bibleBooks';
 import { useBibleStore } from '../../store/useBibleStore';
+import { getVerseText, countVerses } from '../../services/bibleData';
 import { useToast } from '../ui/Toast';
 import { verseRef } from '../../services/verseLabel';
 import { formatDateTime } from '../../services/datetime';
@@ -26,12 +27,51 @@ export function VerseDetailModal({ verse, sessions, onClose }: VerseDetailModalP
   const [verseStart, setVerseStart] = useState(1);
   const [useRange, setUseRange] = useState(false);
   const [verseEnd, setVerseEnd] = useState(2);
+  const [filled, setFilled] = useState(false);
   const textRef = useRef<HTMLTextAreaElement>(null);
+
+  // 가져온 본문 데이터(IndexedDB) 개수
+  const [dataCount, setDataCount] = useState(0);
+  useEffect(() => {
+    countVerses()
+      .then(setDataCount)
+      .catch(() => setDataCount(0));
+  }, []);
 
   // 다른 구절을 열거나 닫으면 수정 모드 해제
   useEffect(() => {
     setEditing(false);
   }, [verse?.id]);
+
+  // 수정 중 책·장·절을 바꾸면 본문을 자동으로 채운다.
+  // 수정 진입 직후(첫 실행)는 건너뛰어 기존 본문을 유지한다.
+  const armedRef = useRef(false);
+  const reqRef = useRef(0);
+  useEffect(() => {
+    if (!editing) {
+      armedRef.current = false;
+      return;
+    }
+    if (!armedRef.current) {
+      armedRef.current = true; // 첫 실행(진입 시 시드)은 건너뜀
+      return;
+    }
+    if (dataCount === 0) return;
+    const end = useRange ? verseEnd : undefined;
+    const reqId = ++reqRef.current;
+    const timer = window.setTimeout(() => {
+      getVerseText(book, chapter, verseStart, end)
+        .then((result) => {
+          if (reqId !== reqRef.current) return;
+          if (result && textRef.current) {
+            textRef.current.value = result;
+            setFilled(true);
+          }
+        })
+        .catch(() => {});
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [editing, book, chapter, verseStart, verseEnd, useRange, dataCount]);
 
   if (!verse) return null;
 
@@ -45,6 +85,7 @@ export function VerseDetailModal({ verse, sessions, onClose }: VerseDetailModalP
     setVerseStart(verse.verseStart);
     setUseRange(verse.verseEnd != null && verse.verseEnd > verse.verseStart);
     setVerseEnd(verse.verseEnd ?? verse.verseStart + 1);
+    setFilled(false);
     setEditing(true);
   };
 
@@ -146,9 +187,15 @@ export function VerseDetailModal({ verse, sessions, onClose }: VerseDetailModalP
             <textarea
               ref={textRef}
               defaultValue={verse.text}
+              onChange={() => setFilled(false)}
               rows={6}
               className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3 py-3 font-serif text-base leading-relaxed text-gray-800 outline-none focus:border-bible-primary"
             />
+            {filled && (
+              <p className="mt-1 text-xs text-gray-400">
+                ✓ 바뀐 구절의 본문을 자동으로 채웠어요 (필요하면 수정하세요)
+              </p>
+            )}
           </div>
 
           <div className="flex gap-2">
