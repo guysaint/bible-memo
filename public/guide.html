@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>성경 암송 도우미 사용법</title>
+    <link rel="icon" type="image/png" href="./icons/icon-192.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --green: #4a6741;
+        --green-soft: #eef3ea;
+        --accent: #c8956c;
+        --red: #e24b4a;
+        --ink: #2f3a2c;
+        --muted: #6671622;
+        --gray: #6b7768;
+        --bg: #fbf8f1;
+        --card: #ffffff;
+        --line: #e8e2d2;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: 'Noto Sans KR', -apple-system, sans-serif;
+        font-size: 19px; /* 어르신용 큰 기본 글씨 */
+        line-height: 1.8;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap { max-width: 720px; margin: 0 auto; padding: 0 18px 90px; }
+
+      header.top { text-align: center; padding: 46px 10px 10px; }
+      .top h1 {
+        font-family: 'Noto Serif KR', serif;
+        color: var(--green);
+        font-size: clamp(30px, 7vw, 40px);
+        margin: 10px 0 6px;
+        line-height: 1.3;
+      }
+      .top p { color: var(--gray); font-size: 18px; margin: 0; }
+      .top .icon { font-size: 46px; }
+
+      /* 목차 */
+      nav.toc {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 22px 24px;
+        margin: 26px 0 10px;
+        box-shadow: 0 6px 16px rgba(74, 103, 65, 0.06);
+      }
+      .toc h2 { margin: 0 0 10px; font-size: 20px; color: var(--green); }
+      .toc ol { margin: 0; padding-left: 24px; }
+      .toc li { margin: 6px 0; }
+      .toc a { color: var(--ink); text-decoration: none; border-bottom: 2px solid #d8e3cf; }
+      .toc a:active { color: var(--green); }
+
+      /* 섹션 */
+      section.part { margin-top: 48px; }
+      .part-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+      .part-num {
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+        background: var(--green);
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        font-weight: 700;
+      }
+      .part h2 { margin: 0; font-size: 24px; color: var(--green); }
+      .part > p.desc { margin: 6px 0 18px; color: var(--gray); font-size: 18px; }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 24px;
+        margin-bottom: 18px;
+        box-shadow: 0 6px 16px rgba(74, 103, 65, 0.06);
+      }
+
+      /* 단계 목록 */
+      .steps { margin: 0; padding: 0; list-style: none; counter-reset: step; }
+      .steps li {
+        position: relative;
+        padding: 8px 0 8px 52px;
+        counter-increment: step;
+        font-size: 19px;
+      }
+      .steps li::before {
+        content: counter(step);
+        position: absolute;
+        left: 0;
+        top: 8px;
+        width: 36px;
+        height: 36px;
+        background: var(--green-soft);
+        color: var(--green);
+        border: 2px solid var(--green);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 18px;
+      }
+      .steps b { color: var(--green); }
+      .press {
+        display: inline-block;
+        background: var(--green);
+        color: #fff;
+        border-radius: 10px;
+        padding: 1px 12px;
+        font-weight: 500;
+        font-size: 17px;
+        white-space: nowrap;
+      }
+      .press.orange { background: var(--accent); }
+
+      /* 폰 그림(모형) */
+      .phone {
+        width: min(320px, 92%);
+        margin: 20px auto;
+        background: var(--bg);
+        border: 3px solid #3c3c3c;
+        border-radius: 30px;
+        padding: 14px 12px 10px;
+        box-shadow: 0 12px 26px rgba(0, 0, 0, 0.12);
+        font-size: 15px;
+      }
+      .phone .app-title { font-family: 'Noto Serif KR', serif; color: var(--green); font-weight: 700; font-size: 17px; padding: 2px 6px 8px; }
+      .mock-card {
+        background: #fff;
+        border-left: 5px solid var(--green);
+        border-radius: 14px;
+        padding: 12px 14px;
+        margin: 8px 4px;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+      }
+      .mock-ref { color: var(--green); font-weight: 700; font-size: 13.5px; }
+      .mock-text { font-family: 'Noto Serif KR', serif; font-size: 14.5px; line-height: 1.65; margin-top: 5px; color: #333; }
+      .mock-btn {
+        background: var(--green);
+        color: #fff;
+        text-align: center;
+        border-radius: 12px;
+        padding: 9px 0;
+        margin-top: 10px;
+        font-weight: 500;
+        font-size: 14.5px;
+      }
+      .mock-btn.orange { background: var(--accent); }
+      .mock-btn.outline { background: #fff; color: var(--green); border: 1.5px solid var(--green); }
+      .mock-input {
+        background: #fff;
+        border: 1.5px solid #ddd;
+        border-radius: 12px;
+        padding: 9px 12px;
+        margin: 7px 4px;
+        color: #444;
+        font-size: 14px;
+      }
+      .mock-label { font-size: 12px; color: #999; margin: 8px 6px 0; }
+      .mock-tabbar {
+        display: flex;
+        border-top: 1.5px solid #e5e5e5;
+        background: #fff;
+        border-radius: 0 0 22px 22px;
+        margin: 12px -12px -10px;
+        padding: 8px 0 10px;
+      }
+      .mock-tab { flex: 1; text-align: center; font-size: 11px; color: #aaa; }
+      .mock-tab .ico { font-size: 18px; display: block; }
+      .mock-tab.on { color: var(--green); font-weight: 700; }
+      .mock-circles { display: flex; gap: 8px; justify-content: space-around; padding: 8px 10px 2px; }
+      .mc { text-align: center; font-size: 10px; color: #888; }
+      .mc .dot {
+        width: 34px; height: 34px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 3px; font-size: 15px; font-weight: 700;
+      }
+      .mc .dot.full { background: var(--green); color: #fff; }
+      .mc .dot.next { border: 2px solid var(--accent); color: var(--accent); }
+      .mc .dot.empty { border: 2px dashed #ccc; color: #ccc; }
+
+      /* 가리키는 표시 */
+      .point {
+        outline: 3.5px solid var(--red);
+        outline-offset: 3px;
+        border-radius: 14px;
+        position: relative;
+      }
+      .point-note {
+        text-align: center;
+        color: var(--red);
+        font-weight: 700;
+        font-size: 17px;
+        margin: 12px 0 4px;
+      }
+      .arrow { color: var(--red); font-size: 26px; text-align: center; line-height: 1; margin: 2px 0; }
+
+      /* 팁/주의 */
+      .tip {
+        background: #fdf6e6;
+        border: 1.5px dashed #e3ce93;
+        border-radius: 14px;
+        padding: 14px 18px;
+        font-size: 17.5px;
+        margin-top: 14px;
+      }
+      .tip b { color: #9a6b00; }
+      .good { color: var(--green); font-weight: 700; }
+
+      /* 모드 카드 그리드 */
+      .modes { display: grid; grid-template-columns: 1fr; gap: 12px; }
+      .mode {
+        display: flex; gap: 14px; align-items: flex-start;
+        background: var(--green-soft);
+        border-radius: 16px;
+        padding: 16px 18px;
+      }
+      .mode .mi { font-size: 30px; line-height: 1.2; }
+      .mode b { display: block; font-size: 19px; color: var(--green); }
+      .mode span { font-size: 17.5px; color: #4a5544; }
+
+      footer.foot {
+        margin-top: 60px;
+        text-align: center;
+        color: var(--gray);
+        font-size: 15px;
+        border-top: 1px solid var(--line);
+        padding-top: 24px;
+      }
+      .backtoapp {
+        display: block;
+        background: var(--green);
+        color: #fff;
+        text-decoration: none;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 700;
+        border-radius: 16px;
+        padding: 16px;
+        margin: 34px auto 0;
+        max-width: 420px;
+        box-shadow: 0 8px 20px rgba(74, 103, 65, 0.25);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <div class="icon">📖</div>
+        <h1>성경 암송 도우미<br />사용법 안내</h1>
+        <p>천천히 따라 하시면 누구나 쓰실 수 있어요.</p>
+      </header>
+
+      <nav class="toc">
+        <h2>순서</h2>
+        <ol>
+          <li><a href="#install">앱을 휴대폰에 설치하기</a></li>
+          <li><a href="#layout">화면 구성 한눈에 보기</a></li>
+          <li><a href="#add">이번 주 말씀 추가하기</a></li>
+          <li><a href="#practice">암송 연습하기 (4가지 방법)</a></li>
+          <li><a href="#exam">묶음 시험 보기</a></li>
+          <li><a href="#history">기록 보기 · 구절 고치기</a></li>
+          <li><a href="#backup">내 기록 지키기 (백업)</a></li>
+          <li><a href="#faq">자주 묻는 질문</a></li>
+        </ol>
+      </nav>
+
+      <!-- 1. 설치 -->
+      <section class="part" id="install">
+        <div class="part-head"><div class="part-num">1</div><h2>앱을 휴대폰에 설치하기</h2></div>
+        <p class="desc">한 번만 해두시면 휴대폰 바탕화면에서 바로 열 수 있어요. <b>기록이 지워지지 않게 하려면 꼭 해주세요.</b></p>
+
+        <div class="card">
+          <h3 style="margin:0 0 10px; font-size:20px;">🍎 아이폰(사파리)에서</h3>
+          <ol class="steps">
+            <li>사파리에서 앱 주소를 엽니다.<br /><b>guysaint.github.io/bible-memo</b></li>
+            <li>화면 <b>아래 가운데</b>에 있는 <span class="press">공유 버튼 ⬆︎</span>(네모에 화살표)를 누릅니다.</li>
+            <li>목록을 위로 쓸어올려 <span class="press">홈 화면에 추가</span>를 누릅니다.</li>
+            <li>오른쪽 위 <span class="press">추가</span>를 누르면 끝!</li>
+          </ol>
+          <div class="tip"><b>중요!</b> 아이폰은 이 과정을 안 하면 오래 안 쓸 때 기록이 지워질 수 있어요. 꼭 해주세요.</div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin:0 0 10px; font-size:20px;">🤖 갤럭시 등 안드로이드(크롬)에서</h3>
+          <ol class="steps">
+            <li>크롬에서 앱 주소를 엽니다.<br /><b>guysaint.github.io/bible-memo</b></li>
+            <li>오른쪽 위 <span class="press">점 세 개 ⋮</span>를 누릅니다.</li>
+            <li><span class="press">홈 화면에 추가</span>(또는 ‘앱 설치’)를 누릅니다.</li>
+            <li><span class="press">설치</span> 또는 <span class="press">추가</span>를 누르면 끝!</li>
+          </ol>
+        </div>
+
+        <div class="tip">설치가 끝나면 바탕화면에 <b>초록색 성경책 아이콘</b>이 생겨요. 다음부터는 이 아이콘만 누르시면 됩니다. 처음 열 때 성경 본문이 자동으로 준비됩니다(몇 초 걸려요).</div>
+      </section>
+
+      <!-- 2. 화면 구성 -->
+      <section class="part" id="layout">
+        <div class="part-head"><div class="part-num">2</div><h2>화면 구성 한눈에 보기</h2></div>
+        <p class="desc">화면 <b>맨 아래 5개 버튼</b>으로 모든 곳을 오갈 수 있어요.</p>
+
+        <div class="phone">
+          <div class="app-title">BibleMemo</div>
+          <div class="mock-card">
+            <div class="mock-ref">요한복음 3:16</div>
+            <div class="mock-text">하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니…</div>
+            <div class="mock-btn">오늘 암송하기</div>
+          </div>
+          <div class="arrow">⬇ 아래 5개 버튼이 메뉴예요</div>
+          <div class="mock-tabbar point">
+            <div class="mock-tab on"><span class="ico">🏠</span>홈</div>
+            <div class="mock-tab"><span class="ico">✏️</span>추가</div>
+            <div class="mock-tab"><span class="ico">🎯</span>연습</div>
+            <div class="mock-tab"><span class="ico">📝</span>시험</div>
+            <div class="mock-tab"><span class="ico">📊</span>기록</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="modes">
+            <div class="mode"><div class="mi">🏠</div><div><b>홈</b><span>이번 주 말씀과 진행 상황을 봐요.</span></div></div>
+            <div class="mode"><div class="mi">✏️</div><div><b>추가</b><span>매주 새 암송 구절을 등록해요.</span></div></div>
+            <div class="mode"><div class="mi">🎯</div><div><b>연습</b><span>네 가지 방법으로 암송을 연습해요.</span></div></div>
+            <div class="mode"><div class="mi">📝</div><div><b>시험</b><span>구절 4개가 모이면 시험을 봐요.</span></div></div>
+            <div class="mode"><div class="mi">📊</div><div><b>기록</b><span>지금까지의 연습·시험 기록을 봐요.</span></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. 구절 추가 -->
+      <section class="part" id="add">
+        <div class="part-head"><div class="part-num">3</div><h2>이번 주 말씀 추가하기</h2></div>
+        <p class="desc">책과 장·절만 고르면 <b>성경 본문이 저절로 채워져요.</b> 타자 칠 필요가 없어요!</p>
+
+        <div class="phone">
+          <div class="app-title">이번 주 말씀 추가</div>
+          <div class="mock-label">책</div>
+          <div class="mock-input point">요한복음 ▾</div>
+          <div class="point-note" style="margin-top:8px;">① 책을 고르세요</div>
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1"><div class="mock-label">장</div><div class="mock-input" style="text-align:center;">− &nbsp; 3 &nbsp; +</div></div>
+            <div style="flex:1"><div class="mock-label">절 시작</div><div class="mock-input" style="text-align:center;">− &nbsp; 16 &nbsp; +</div></div>
+          </div>
+          <div class="point-note">② 장과 절을 맞추세요</div>
+          <div class="mock-label">본문</div>
+          <div class="mock-input" style="min-height:64px; font-family:'Noto Serif KR',serif;">하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니 이는 그를 믿는 자마다…</div>
+          <div class="point-note" style="color:var(--green)">③ 본문이 저절로 채워져요 ✓</div>
+          <div class="mock-btn point">이번 주 말씀 추가</div>
+          <div class="point-note">④ 이 버튼을 누르면 끝!</div>
+        </div>
+
+        <div class="card">
+          <ol class="steps">
+            <li>아래 메뉴에서 <span class="press">✏️ 추가</span>를 누릅니다.</li>
+            <li><b>책</b>을 누르고 목록에서 성경책을 고릅니다. (예: 요한복음)</li>
+            <li><b>장</b>과 <b>절</b>의 숫자를 <b>−</b> <b>+</b> 버튼이나 숫자 칸으로 맞춥니다.<br />숫자 칸을 누르면 전체가 선택되어 <b>새 숫자를 바로 입력</b>할 수 있어요.</li>
+            <li>본문이 저절로 채워진 것을 확인합니다.</li>
+            <li>맨 아래 <span class="press">이번 주 말씀 추가</span>를 누릅니다.</li>
+          </ol>
+          <div class="tip"><b>여러 절</b>을 외우실 때는 ‘범위 절’ 스위치를 켜고 끝나는 절을 정해주세요. (예: 16~17절)</div>
+        </div>
+      </section>
+
+      <!-- 4. 연습 -->
+      <section class="part" id="practice">
+        <div class="part-head"><div class="part-num">4</div><h2>암송 연습하기 (4가지 방법)</h2></div>
+        <p class="desc">홈의 <span class="press">오늘 암송하기</span> 버튼이나, 아래 메뉴의 <span class="press">🎯 연습</span>에서 구절을 누르면 연습 방법을 고르는 창이 떠요.</p>
+
+        <div class="card">
+          <div class="modes">
+            <div class="mode"><div class="mi">👀</div><div><b>보면서 읽기</b><span>본문을 눈으로 보며 소리 내어 읽어요. <b>▶ 읽어주기</b>를 누르면 휴대폰이 낭독해 줍니다. 속도도 조절돼요.</span></div></div>
+            <div class="mode"><div class="mi">✏️</div><div><b>단어 채우기</b><span>본문 중간중간이 빈칸이 돼요. 빈칸을 떠올려 보고, 누르면 힌트(첫 글자) → 한 번 더 누르면 정답이 보여요.</span></div></div>
+            <div class="mode"><div class="mi">⌨️</div><div><b>직접 입력</b><span>본문을 가린 채 기억만으로 입력해요. <b>채점하기</b>를 누르면 몇 점인지, 어디가 틀렸는지 알려줘요.</span></div></div>
+            <div class="mode"><div class="mi">🎧</div><div><b>듣기 모드</b><span>본문을 가리고 귀로만 들어요. 반복 횟수를 정해 여러 번 들을 수 있어요.</span></div></div>
+          </div>
+          <div class="tip">처음에는 <b>👀 보면서 읽기</b>로 익숙해지고, 외워지면 <b>⌨️ 직접 입력</b>으로 확인해 보세요. 90점이 넘으면 ‘마스터’ 표시가 붙어요! 🎉</div>
+        </div>
+
+        <div class="phone">
+          <div class="app-title">연습 방법 고르기</div>
+          <div class="mock-card"><div class="mock-ref">👀 보면서 읽기</div><div class="mock-text" style="font-family:inherit; font-size:12.5px; color:#888;">본문을 보며 소리 내어 따라 읽어요</div></div>
+          <div class="mock-card"><div class="mock-ref">✏️ 단어 채우기</div><div class="mock-text" style="font-family:inherit; font-size:12.5px; color:#888;">빈칸을 떠올리며 암송을 점검해요</div></div>
+          <div class="mock-card point"><div class="mock-ref">⌨️ 직접 입력</div><div class="mock-text" style="font-family:inherit; font-size:12.5px; color:#888;">기억만으로 본문을 입력하고 채점받아요</div></div>
+          <div class="point-note">원하는 방법을 누르세요</div>
+          <div class="mock-card"><div class="mock-ref">🎧 듣기 모드</div><div class="mock-text" style="font-family:inherit; font-size:12.5px; color:#888;">본문을 가린 채 들으며 외워요</div></div>
+        </div>
+      </section>
+
+      <!-- 5. 시험 -->
+      <section class="part" id="exam">
+        <div class="part-head"><div class="part-num">5</div><h2>묶음 시험 보기</h2></div>
+        <p class="desc">구절 <b>4개가 한 묶음</b>이에요. 4개가 다 모이면 시험을 볼 수 있어요.</p>
+
+        <div class="phone">
+          <div class="app-title">1묶음 진행 중</div>
+          <div class="mock-circles">
+            <div class="mc"><div class="dot full">✓</div>요 3:16</div>
+            <div class="mc"><div class="dot full">✓</div>시 23:1</div>
+            <div class="mc"><div class="dot full">✓</div>빌 4:13</div>
+            <div class="mc"><div class="dot full">✓</div>잠 3:5</div>
+          </div>
+          <div class="mock-btn orange point">🎓 1묶음 시험 보기</div>
+          <div class="point-note">4개가 다 차면 이 버튼이 나타나요</div>
+        </div>
+
+        <div class="card">
+          <ol class="steps">
+            <li>4개 구절이 모이면 홈에 <span class="press orange">묶음 시험 보기</span> 버튼이 나타나요. 누르세요.</li>
+            <li>구절이 한 개씩 나옵니다. <b>기억나는 대로 입력</b>하고 <span class="press">제출</span>을 누르세요.</li>
+            <li>4개를 다 마치면 점수가 나와요. <b>평균 80점 이상이면 합격!</b> 🎉</li>
+            <li>아쉽게 못 넘었어도 괜찮아요. <span class="press orange">집중 연습</span>으로 약한 구절만 다시 연습하고 재도전하세요.</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- 6. 기록 -->
+      <section class="part" id="history">
+        <div class="part-head"><div class="part-num">6</div><h2>기록 보기 · 구절 고치기</h2></div>
+        <p class="desc">아래 메뉴의 <span class="press">📊 기록</span>에서 지금까지의 발자취를 볼 수 있어요.</p>
+
+        <div class="card">
+          <ol class="steps">
+            <li>위쪽 네 칸에서 <b>총 구절 수 · 연습 횟수 · 연속 일수 · 합격률</b>을 봐요.</li>
+            <li>묶음을 누르면 그 안의 구절들이 펼쳐져요.</li>
+            <li>구절을 누르면 본문 전체와 연습 이력이 보여요.</li>
+            <li>잘못 넣었거나 고치고 싶으면 <span class="press">✏ 수정</span>을 누르세요. 책·장·절을 바꾸면 <b>본문도 저절로 바뀌어요.</b> 마지막에 <span class="press">저장</span>!</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- 7. 백업 -->
+      <section class="part" id="backup">
+        <div class="part-head"><div class="part-num">7</div><h2>내 기록 지키기 (백업)</h2></div>
+        <p class="desc">기록은 <b>내 휴대폰 안에만</b> 저장돼요. 휴대폰을 바꾸시거나 초기화하면 사라질 수 있으니, 가끔 백업해 두세요.</p>
+
+        <div class="card">
+          <ol class="steps">
+            <li><span class="press">📊 기록</span> 화면을 맨 아래로 내립니다.</li>
+            <li><span class="press">⬇ 내 기록 백업 내보내기</span>를 누르면 파일이 하나 저장돼요.</li>
+            <li>새 휴대폰에서는 <span class="press">⬆ 백업 파일로 복원하기</span>를 누르고 그 파일을 고르면 기록이 그대로 돌아와요.</li>
+          </ol>
+          <div class="tip"><b>한 달에 한 번</b> 정도 백업해 두시면 안심이에요. 저장된 파일은 카카오톡 ‘나에게 보내기’로 보관하셔도 좋아요.</div>
+        </div>
+      </section>
+
+      <!-- 8. FAQ -->
+      <section class="part" id="faq">
+        <div class="part-head"><div class="part-num">8</div><h2>자주 묻는 질문</h2></div>
+
+        <div class="card">
+          <p><b>Q. 본문이 저절로 안 채워져요.</b><br />
+          A. 처음 한 번은 인터넷이 연결된 곳에서 앱을 열어주세요. 그래도 안 되면 <span class="press">✏️ 추가</span> 화면에서 본문 칸 아래 <span class="press">본문 데이터 가져오기</span> → <span class="press">📖 개역개정 본문 설치</span>를 눌러주세요.</p>
+          <p><b>Q. 소리가 안 나와요.</b><br />
+          A. 휴대폰 옆의 소리 버튼으로 <b>음량을 올리고</b>, 무음(진동) 모드를 풀어주세요.</p>
+          <p><b>Q. 글씨가 너무 작아요.</b><br />
+          A. 휴대폰 설정의 <b>글자 크기</b>를 키우면 앱 글씨도 함께 커져요.</p>
+          <p><b>Q. 잘못 눌렀는데 어떻게 돌아가요?</b><br />
+          A. 화면 왼쪽 위의 <b>← 표시</b>나 아래 메뉴 버튼을 누르면 언제든 돌아갈 수 있어요. 잘못 눌러도 고장나지 않으니 안심하세요. 😊</p>
+          <p style="margin-bottom:0;"><b>Q. 시험이 안 보여요.</b><br />
+          A. 구절이 <b>4개</b> 모여야 시험 버튼이 나타나요. 아직이라면 매주 한 구절씩 추가해 주세요.</p>
+        </div>
+      </section>
+
+      <a class="backtoapp" href="./">📖 앱으로 돌아가기</a>
+
+      <footer class="foot">
+        <p>성경 암송 도우미 BibleMemo · 매주 한 절씩, 말씀을 마음에</p>
+        <p>개역개정 ⓒ 대한성서공회</p>
+      </footer>
+    </div>
+  </body>
+</html>
