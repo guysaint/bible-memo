@@ -41,7 +41,7 @@ export function Modal({ open, onClose, title, children, sheetOnMobile = true }: 
       aria-label={title}
     >
       <div
-        className={`w-full max-w-md animate-slide-up bg-white ${panelShape} p-5 shadow-2xl`}
+        className={`max-h-[90dvh] w-full max-w-md animate-slide-up overflow-y-auto overscroll-contain bg-white ${panelShape} p-5 shadow-2xl`}
         onClick={(e) => e.stopPropagation()}
         style={{ paddingBottom: 'calc(1.25rem + var(--safe-bottom))' }}
       >
