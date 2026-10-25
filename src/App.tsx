@@ -2,6 +2,7 @@ import { Header } from './components/layout/Header';
 import { TabBar } from './components/layout/TabBar';
 import { ToastProvider } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { UpdateNotice } from './components/ui/UpdateNotice';
 import { NavigationProvider, useNavigation } from './hooks/useNavigation';
 import { useAutoInstallBible } from './hooks/useAutoInstallBible';
 import { Home } from './pages/Home';
@@ -28,6 +29,7 @@ function AppShell() {
         </p>
       </main>
       <TabBar active={tab} onChange={(t) => navigate(t)} />
+      <UpdateNotice />
     </div>
   );
 }
