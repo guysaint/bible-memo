@@ -8,10 +8,18 @@ interface VerseCardProps {
   footer?: ReactNode;
   /** 본문 숨김 (듣기 모드 등) */
   hideText?: boolean;
+  /** 제목줄 오른쪽 끝 액션 (수정 버튼 등) */
+  headerAction?: ReactNode;
   className?: string;
 }
 
-export function VerseCard({ verse, footer, hideText = false, className = '' }: VerseCardProps) {
+export function VerseCard({
+  verse,
+  footer,
+  hideText = false,
+  headerAction,
+  className = '',
+}: VerseCardProps) {
   return (
     <article
       className={`rounded-2xl border-l-4 border-bible-primary bg-white p-5 shadow-sm ${className}`}
@@ -25,6 +33,7 @@ export function VerseCard({ verse, footer, hideText = false, className = '' }: V
             ✓ 마스터
           </span>
         )}
+        {headerAction && <div className="ml-auto shrink-0">{headerAction}</div>}
       </div>
       {!hideText && (
         <p className="mt-3 whitespace-pre-wrap font-serif text-lg leading-relaxed text-gray-800">

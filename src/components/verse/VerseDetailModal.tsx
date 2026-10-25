@@ -15,9 +15,16 @@ interface VerseDetailModalProps {
   verse: Verse | null;
   sessions: MemorizationSession[];
   onClose: () => void;
+  /** 열자마자 수정 화면으로 시작(홈의 수정 버튼). 저장·취소 시 모달을 닫는다. */
+  startInEdit?: boolean;
 }
 
-export function VerseDetailModal({ verse, sessions, onClose }: VerseDetailModalProps) {
+export function VerseDetailModal({
+  verse,
+  sessions,
+  onClose,
+  startInEdit = false,
+}: VerseDetailModalProps) {
   const updateVerse = useBibleStore((s) => s.updateVerse);
   const { showToast } = useToast();
 
@@ -38,9 +45,25 @@ export function VerseDetailModal({ verse, sessions, onClose }: VerseDetailModalP
       .catch(() => setDataCount(0));
   }, []);
 
-  // 다른 구절을 열거나 닫으면 수정 모드 해제
+  // 수정 폼을 구절 값으로 채운다
+  const seedFrom = (v: Verse) => {
+    setBook(v.book);
+    setChapter(v.chapter);
+    setVerseStart(v.verseStart);
+    setUseRange(v.verseEnd != null && v.verseEnd > v.verseStart);
+    setVerseEnd(v.verseEnd ?? v.verseStart + 1);
+    setFilled(false);
+  };
+
+  // 다른 구절을 열면: startInEdit이면 바로 수정 화면, 아니면 상세 화면
   useEffect(() => {
-    setEditing(false);
+    if (verse && startInEdit) {
+      seedFrom(verse);
+      setEditing(true);
+    } else {
+      setEditing(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verse?.id]);
 
   // 수정 중 책·장·절을 바꾸면 본문을 자동으로 채운다.
@@ -80,13 +103,13 @@ export function VerseDetailModal({ verse, sessions, onClose }: VerseDetailModalP
     .sort((a, b) => +new Date(b.sessionDate) - +new Date(a.sessionDate));
 
   const startEdit = () => {
-    setBook(verse.book);
-    setChapter(verse.chapter);
-    setVerseStart(verse.verseStart);
-    setUseRange(verse.verseEnd != null && verse.verseEnd > verse.verseStart);
-    setVerseEnd(verse.verseEnd ?? verse.verseStart + 1);
-    setFilled(false);
+    seedFrom(verse);
     setEditing(true);
+  };
+
+  const cancelEdit = () => {
+    if (startInEdit) onClose();
+    else setEditing(false);
   };
 
   const handleSave = () => {
@@ -103,7 +126,8 @@ export function VerseDetailModal({ verse, sessions, onClose }: VerseDetailModalP
       text,
     });
     showToast('구절을 수정했어요.');
-    setEditing(false);
+    if (startInEdit) onClose();
+    else setEditing(false);
   };
 
   const maxChapter = findBook(book)?.chapters ?? 150;
@@ -199,7 +223,7 @@ export function VerseDetailModal({ verse, sessions, onClose }: VerseDetailModalP
           </div>
 
           <div className="flex gap-2">
-            <button onClick={() => setEditing(false)} className="btn-secondary flex-1">
+            <button onClick={cancelEdit} className="btn-secondary flex-1">
               취소
             </button>
             <button onClick={handleSave} className="btn-primary flex-1">

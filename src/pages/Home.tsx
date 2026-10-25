@@ -3,6 +3,7 @@ import { useBibleStore } from '../store/useBibleStore';
 import { useNavigation } from '../hooks/useNavigation';
 import { groupByGroupIndex } from '../hooks/useVerses';
 import { VerseCard } from '../components/verse/VerseCard';
+import { VerseDetailModal } from '../components/verse/VerseDetailModal';
 import { GroupProgress } from '../components/verse/GroupProgress';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ModeSelectModal } from '../components/practice/ModeSelectModal';
@@ -17,6 +18,8 @@ export function Home() {
   const { navigate } = useNavigation();
 
   const [modalVerse, setModalVerse] = useState<Verse | null>(null);
+  // 카드의 수정 버튼으로 바로 여는 수정 화면
+  const [editVerse, setEditVerse] = useState<Verse | null>(null);
   // 선택 상태: null이면 각각 현재 묶음 / 최신 구절을 가리킨다.
   const [selectedGroupIndex, setSelectedGroupIndex] = useState<number | null>(null);
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
@@ -72,6 +75,14 @@ export function Home() {
         </h2>
         <VerseCard
           verse={displayVerse}
+          headerAction={
+            <button
+              onClick={() => setEditVerse(displayVerse)}
+              className="rounded-full border border-bible-primary/40 px-3 py-1 text-sm font-medium text-bible-primary transition-active"
+            >
+              ✏️ 수정
+            </button>
+          }
           footer={
             <button
               onClick={() => setModalVerse(displayVerse)}
@@ -143,6 +154,13 @@ export function Home() {
         verse={modalVerse}
         onClose={() => setModalVerse(null)}
         onSelect={handleSelectMode}
+      />
+
+      <VerseDetailModal
+        verse={editVerse}
+        sessions={sessions}
+        onClose={() => setEditVerse(null)}
+        startInEdit
       />
     </div>
   );
